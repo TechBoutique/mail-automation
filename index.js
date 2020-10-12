@@ -1,3 +1,6 @@
+var sqlite3 = require('sqlite3').verbose();
+var db = new sqlite3.Database(':memory:');
+
 const { GoogleSpreadsheet } = require("google-spreadsheet");
 const creds = require("./credentials.json");
 
@@ -11,7 +14,9 @@ function printDetails(element) {
   console.log("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
   console.log(`Timestamp: ${element["Timestamp"]}`);
   console.log(`Drop your name here: ${element["Drop your name here"]}`);
-  console.log(`Your email?: ${element["Your email?"]}`);
+  console.log(`Your email?: ${element["Your email?"]}`);   
+  let name = element["Drop your name here"];
+  let email = element["Your email?"];
   console.log(`Your Contact Number? ${element["Your Contact Number?"]}`);
   console.log(
     `Drop your Linkedin Profile (URL): ${element["Drop your Linkedin Profile (URL)"]}`
@@ -28,6 +33,48 @@ function printDetails(element) {
   console.log(`Github URL ${element["Github URL"]}`);
   console.log("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
   console.log("\n");
+
+  dbwrite(email,name,1);
+  
+} 
+
+async function dbread(){ 
+  let db = new sqlite3.Database('coders.db', (err) => {
+    if (err) {
+      return console.error(err.message);
+    }
+    console.log('Connected to the in-memory SQlite database.');
+  }); 
+  let sql = `SELECT email from coders`;
+
+db.all(sql, [], (err, rows) => {
+  if (err) {
+    throw err;
+  }
+  rows.forEach((row) => {
+    console.log(row);
+  });
+}); 
+
+  db.close(); 
+} 
+
+function dbwrite(email,name,batch) {  
+  console.log("about to insert  values",email) 
+  console.log("about to insert  values",name)
+  let db = new sqlite3.Database('coders.db', (err) => {
+    if (err) {
+      return console.error("database not connected",err.message);
+    }
+    console.log('Connected to the in-memory SQlite database.');
+  });  
+  db.run(`INSERT INTO coders VALUES(?)`, ['C'], function(err) {
+    if (err) {
+      return console.log(err.message);
+    }
+    // get the last insert id
+    console.log(`A row has been inserted with rowid ${this.lastID}`);
+  });
 }
 
 async function accessSpreadsheet() {
@@ -48,4 +95,5 @@ async function accessSpreadsheet() {
   });
 }
 
-accessSpreadsheet();
+dbread();
+// accessSpreadsheet();
